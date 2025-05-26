@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>預約看診紀錄</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f7f7f7; }
+        .container { margin-top: 40px; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+      <div class="container-fluid">
+        <span class="navbar-brand">健康追蹤網站</span>
+        <div>
+          <span class="me-3">歡迎，{{ username }}！</span>
+          <a class="btn btn-outline-primary btn-sm me-2" href="{{ url_for('index') }}">首頁</a>
+          <a class="btn btn-outline-success btn-sm me-2" href="{{ url_for('blood_pressure') }}">血壓紀錄</a>
+          <a class="btn btn-outline-info btn-sm me-2" href="{{ url_for('height_weight') }}">身高體重紀錄</a>
+          <a class="btn btn-outline-secondary btn-sm me-2" href="{{ url_for('profile') }}">個人資料</a>
+          <a class="btn btn-outline-warning btn-sm me-2" href="{{ url_for('medical_records') }}">醫療紀錄</a>
+          <a class="btn btn-outline-dark btn-sm me-2" href="{{ url_for('appointments') }}">預約看診</a>
+          <a class="btn btn-outline-primary btn-sm me-2" href="{{ url_for('exercise') }}">運動記錄</a>
+          <a class="btn btn-outline-danger btn-sm me-2" href="{{ url_for('diet') }}">飲食記錄</a>
+          <a class="btn btn-outline-danger btn-sm" href="{{ url_for('logout') }}">登出</a>
+        </div>
+      </div>
+    </nav>
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-md-10">
+          <div class="card shadow-sm mb-4">
+            <div class="card-body">
+              <h2 class="card-title mb-4">預約看診紀錄</h2>
+              {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                  <div class="alert alert-success">{{ messages[0] }}</div>
+                {% endif %}
+              {% endwith %}
+              <form method="post" class="mb-4">
+                <div class="row g-2 mb-2">
+                  <div class="col-md-2"><input type="date" class="form-control" name="appointment_date" required></div>
+                  <div class="col-md-2"><input type="text" class="form-control" name="hospital" placeholder="醫院" required></div>
+                  <div class="col-md-2">
+                    <select class="form-select" name="department" required>
+                      <option value="">科別</option>
+                      <option value="內科">內科</option>
+                      <option value="外科">外科</option>
+                      <option value="家醫科">家醫科</option>
+                      <option value="小兒科">小兒科</option>
+                      <option value="婦產科">婦產科</option>
+                      <option value="骨科">骨科</option>
+                      <option value="耳鼻喉科">耳鼻喉科</option>
+                      <option value="眼科">眼科</option>
+                      <option value="皮膚科">皮膚科</option>
+                      <option value="牙科">牙科</option>
+                      <option value="泌尿科">泌尿科</option>
+                      <option value="神經科">神經科</option>
+                      <option value="心臟科">心臟科</option>
+                      <option value="復健科">復健科</option>
+                      <option value="其他">其他</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2"><input type="text" class="form-control" name="reason" placeholder="看診原因" required></div>
+                </div>
+                <button type="submit" class="btn btn-dark w-100">新增預約</button>
+              </form>
+              <h4>歷史預約看診紀錄</h4>
+              <table class="table table-striped">
+                <thead><tr><th>日期</th><th>醫院</th><th>科別</th><th>看診原因</th><th>操作</th></tr></thead>
+                <tbody>
+                  {% for a in appts %}
+                  <tr>
+                    <td>{{ a[1] }}</td>
+                    <td>{{ a[2] }}</td>
+                    <td>{{ a[3] }}</td>
+                    <td>{{ a[4] }}</td>
+                    <td>
+                      <a href="{{ url_for('appointments', delete_id=a[0]) }}" class="btn btn-sm btn-danger" onclick="return confirm('確定要刪除這筆預約嗎？')">刪除</a>
+                    </td>
+                  </tr>
+                  {% else %}
+                  <tr><td colspan="5">尚無紀錄</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+</body>
+</html>

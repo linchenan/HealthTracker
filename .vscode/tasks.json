@@ -1,0 +1,13 @@
+{
+    // 使用 VS Code 任務來啟動網站伺服器
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run HealthTracker Server",
+            "type": "shell",
+            "command": "python app.py",
+            "group": "build",
+            "problemMatcher": []
+        }
+    ]
+}

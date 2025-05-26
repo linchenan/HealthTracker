@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>飲食記錄</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f7f7f7; }
+        .container { margin-top: 40px; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+      <div class="container-fluid">
+        <span class="navbar-brand">健康追蹤網站</span>
+        <div>
+          <span class="me-3">歡迎，{{ username }}！</span>
+          <a class="btn btn-outline-primary btn-sm me-2" href="{{ url_for('index') }}">首頁</a>
+          <a class="btn btn-outline-success btn-sm me-2" href="{{ url_for('blood_pressure') }}">血壓紀錄</a>
+          <a class="btn btn-outline-info btn-sm me-2" href="{{ url_for('height_weight') }}">身高體重紀錄</a>
+          <a class="btn btn-outline-secondary btn-sm me-2" href="{{ url_for('profile') }}">個人資料</a>
+          <a class="btn btn-outline-warning btn-sm me-2" href="{{ url_for('medical_records') }}">醫療紀錄</a>
+          <a class="btn btn-outline-dark btn-sm me-2" href="{{ url_for('appointments') }}">預約看診</a>
+          <a class="btn btn-outline-primary btn-sm me-2" href="{{ url_for('exercise') }}">運動記錄</a>
+          <a class="btn btn-outline-danger btn-sm me-2" href="{{ url_for('diet') }}">飲食記錄</a>
+          <a class="btn btn-outline-danger btn-sm" href="{{ url_for('logout') }}">登出</a>
+        </div>
+      </div>
+    </nav>
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-md-10">
+          <div class="card shadow-sm mb-4">
+            <div class="card-body">
+              <h2 class="card-title mb-4">飲食記錄</h2>
+              <div class="alert alert-info">{{ status }}</div>
+              <form method="post" class="mb-4">
+                <div class="row g-2 mb-2">
+                  <div class="col-md-2"><input type="date" class="form-control" name="diet_date" value="{{ (total_cal|default(0), '')[1] or (request.form.diet_date if request.form.get('diet_date') else (now.strftime('%Y-%m-%d'))) }}" required></div>
+                  <div class="col-md-2">
+                    <select class="form-select" name="meal_type" required>
+                      <option value="">餐別</option>
+                      <option value="早餐">早餐</option>
+                      <option value="午餐">午餐</option>
+                      <option value="晚餐">晚餐</option>
+                      <option value="點心">點心</option>
+                      <option value="其他">其他</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4"><input type="text" class="form-control" name="description" placeholder="食物內容" required></div>
+                  <div class="col-md-2"><input type="number" class="form-control" name="calories" min="0" placeholder="熱量(大卡)" required></div>
+                  <div class="col-md-2"><button type="submit" class="btn btn-danger w-100">新增紀錄</button></div>
+                </div>
+              </form>
+              <h4>今日飲食紀錄</h4>
+              <table class="table table-striped">
+                <thead><tr><th>日期</th><th>餐別</th><th>內容</th><th>熱量(大卡)</th><th>操作</th></tr></thead>
+                <tbody>
+                  {% for r in records %}
+                  <tr>
+                    <td>{{ r[1] }}</td>
+                    <td>{{ r[2] }}</td>
+                    <td>{{ r[3] }}</td>
+                    <td>{{ r[4] }}</td>
+                    <td>
+                      <a href="{{ url_for('diet', delete_id=r[0]) }}" class="btn btn-sm btn-danger" onclick="return confirm('確定要刪除這筆飲食紀錄嗎？')">刪除</a>
+                    </td>
+                  </tr>
+                  {% else %}
+                  <tr><td colspan="5">尚無紀錄</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+              <div class="mt-3">建議攝取熱量：{{ suggest_min }} ~ {{ suggest_max }} 大卡</div>
+              <div>今日總攝取熱量：<span class="fw-bold">{{ total_cal }}</span> 大卡</div>
+              <h4>近兩週飲食攝取量折線圖</h4>
+              <canvas id="dietChart" height="80"></canvas>
+              <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+              <script type="text/javascript">
+                window.addEventListener('DOMContentLoaded', function() {
+                  var chartLabels = JSON.parse('{{ chart_labels|tojson|safe }}');
+                  var chartData = JSON.parse('{{ chart_data|tojson|safe }}');
+                  var chartSuggest = JSON.parse('{{ chart_suggest|tojson|safe }}');
+                  var ctx = document.getElementById('dietChart').getContext('2d');
+                  new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                      labels: chartLabels,
+                      datasets: [
+                        {
+                          label: '每日攝取熱量',
+                          data: chartData,
+                          borderColor: 'rgba(54, 162, 235, 1)',
+                          backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                          tension: 0.3,
+                          fill: false
+                        },
+                        {
+                          label: '建議攝取熱量',
+                          data: chartSuggest,
+                          borderColor: 'rgba(255, 99, 132, 1)',
+                          borderDash: [5,5],
+                          backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                          tension: 0.3,
+                          fill: false
+                        }
+                      ]
+                    },
+                    options: {
+                      responsive: true,
+                      plugins: {
+                        legend: { position: 'top' },
+                        title: { display: false }
+                      },
+                      scales: {
+                        y: { beginAtZero: true }
+                      }
+                    }
+                  });
+                });
+              </script>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+</body>
+</html>
