@@ -630,6 +630,31 @@ def diet():
                          chart_data=chart_data, 
                          chart_suggest=chart_suggest)
 
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    """Forgot password: verify username and birthday, then reset password"""
+    if request.method == 'POST':
+        username = request.form['username']
+        birthday = request.form['birthday']
+        new_password = request.form['new_password']
+        auth_service = get_auth_service()
+        user = auth_service.get_user_by_username(username)
+        if not user:
+            flash('查無此帳號，請確認輸入')
+            return render_template('forgot_password.html')
+        # 比對生日
+        if not user.birthday or user.birthday != birthday:
+            flash('生日驗證失敗，請確認輸入')
+            return render_template('forgot_password.html')
+        # 更新密碼
+        if auth_service.update_user_password(username, new_password):
+            flash('密碼已重設，請使用新密碼登入')
+            return redirect(url_for('login'))
+        else:
+            flash('密碼重設失敗，請稍後再試')
+            return render_template('forgot_password.html')
+    return render_template('forgot_password.html')
+
 # Register health data Blueprint
 app.register_blueprint(create_health_bp(DB_PATH))
 

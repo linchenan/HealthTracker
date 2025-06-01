@@ -26,6 +26,11 @@ class IAuthenticationService(ABC):
     def hash_password(self, password: str) -> str:
         """Hash a password"""
         pass
+    
+    @abstractmethod
+    def update_user_password(self, username: str, new_password: str) -> bool:
+        """Update user's password (for password reset)"""
+        pass
 
 
 class IHealthEvaluationService(ABC):

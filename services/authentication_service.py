@@ -67,3 +67,22 @@ class AuthenticationService(IAuthenticationService):
         except Exception as e:
             print(f"Error getting user by username: {e}")
             return None
+        
+    def update_user_password(self, username: str, new_password: str) -> bool:
+        """Update user's password (for password reset)"""
+        try:
+            user = self.user_repository.get_user_by_username(username)
+            if not user:
+                return False
+            password_hash = self.hash_password(new_password)
+            # 直接更新密碼欄位
+            import sqlite3
+            conn = sqlite3.connect(self.user_repository.db_path)
+            c = conn.cursor()
+            c.execute("UPDATE users SET password=? WHERE username=?", (password_hash, username))
+            conn.commit()
+            conn.close()
+            return True
+        except Exception as e:
+            print(f"Error updating user password: {e}")
+            return False
