@@ -149,18 +149,7 @@ def get_current_user():
     
     auth_service = get_auth_service()
     user = auth_service.get_user_by_username(username)
-    if user:
-        # Convert User object to dict for backward compatibility
-        return {
-            'id': user.id,
-            'username': user.username,
-            'password': user.password,
-            'email': user.email,
-            'gender': user.gender,
-            'birthday': user.birthday,
-            'created_at': user.created_at
-        }
-    return None
+    return user
 
 @app.route('/')
 def index():
@@ -178,11 +167,6 @@ def index():
     
     # Get health recommendations
     disease_info, prevention = health_service.get_disease_info_and_prevention(age_years)
-    # 修正：確保 disease_info, prevention 為 list 型態
-    if isinstance(disease_info, str):
-        disease_info = [disease_info]
-    if isinstance(prevention, str):
-        prevention = [prevention]
     warning = '※以上資訊僅供參考，實際健康狀況請諮詢專業醫師診斷與建議。'
     
     # Get next appointment
@@ -234,11 +218,12 @@ def register():
         password = request.form['password']
         
         auth_service = get_auth_service()
-        if auth_service.register_user(username, password):
+        try:
+            user_id = auth_service.register_user(username, password)
             flash('註冊成功，請登入')
             return redirect(url_for('login'))
-        else:
-            flash('註冊失敗，使用者名稱可能已存在')
+        except ValueError as e:
+            flash(str(e))
             return redirect(url_for('register'))
     
     return render_template('register.html')
@@ -251,8 +236,7 @@ def login():
         password = request.form['password']
         
         auth_service = get_auth_service()
-        user = auth_service.authenticate_user(username, password)
-        if user:
+        if auth_service.authenticate_user(username, password):
             session['username'] = username
             return redirect(url_for('index'))
         
