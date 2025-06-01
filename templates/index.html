@@ -17,7 +17,7 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
       <div class="container-fluid">
-        <span class="navbar-brand">健康追蹤網站</span>
+        <span class="navbar-brand">健康小幫手</span>
         <div>
           <span class="me-3">歡迎，{{ username }}！</span>
           <a class="btn btn-outline-primary btn-sm me-2" href="{{ url_for('index') }}">首頁</a>
@@ -28,6 +28,7 @@
           <a class="btn btn-outline-dark btn-sm me-2" href="{{ url_for('appointments') }}">預約看診</a>
           <a class="btn btn-outline-primary btn-sm me-2" href="{{ url_for('exercise') }}">運動記錄</a>
           <a class="btn btn-outline-danger btn-sm me-2" href="{{ url_for('diet') }}">飲食記錄</a>
+          <a class="btn btn-outline-info btn-sm me-2" href="{{ url_for('mood') }}">心情紀錄</a>
           <a class="btn btn-outline-danger btn-sm" href="{{ url_for('logout') }}">登出</a>
         </div>
       </div>
@@ -37,7 +38,7 @@
         <div class="col-md-8">
           <div class="card shadow-sm">
             <div class="card-body">
-              <h1 class="card-title mb-4">健康追蹤網站</h1>
+              <h1 class="card-title mb-4">健康小幫手</h1>
               <p class="lead">請選擇上方功能進行健康資料紀錄與查詢。</p>
               {% if age_str %}
               <div class="mb-3">
@@ -49,6 +50,10 @@
               {% elif next_appointment %}
               <div class="alert alert-info">{{ appt_reminder }}</div>
               {% endif %}
+              <!-- 每日小提醒 -->
+              <div class="alert alert-primary mb-3" role="alert">
+                <strong>每日小提醒：</strong> {{ daily_tip }}
+              </div>
               {% if disease_info %}
               <!-- 血壓評估區塊 -->
               <div class="mb-4">
@@ -100,5 +105,53 @@
         </div>
       </div>
     </div>
+
+    <!-- 心情紀錄 Modal -->
+    <div class="modal fade" id="moodModal" tabindex="-1" aria-labelledby="moodModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <form method="post" action="{{ url_for('mood') }}">
+            <div class="modal-header">
+              <h5 class="modal-title" id="moodModalLabel">請問您今天的心情如何？</h5>
+            </div>
+            <div class="modal-body">
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="radio" name="mood" id="very_happy" value="very_happy" required>
+                <label class="form-check-label" for="very_happy">很開心</label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="radio" name="mood" id="happy" value="happy" required>
+                <label class="form-check-label" for="happy">開心</label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="radio" name="mood" id="neutral" value="neutral" required>
+                <label class="form-check-label" for="neutral">普通</label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="radio" name="mood" id="a_bit_down" value="a_bit_down" required>
+                <label class="form-check-label" for="a_bit_down">有點低潮</label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="radio" name="mood" id="very_down" value="very_down" required>
+                <label class="form-check-label" for="very_down">很低潮</label>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-primary">記錄</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        var showMoodModal = {{ 'true' if show_mood_modal else 'false' }};
+        if (showMoodModal === true || showMoodModal === 'true') {
+          var moodModal = new bootstrap.Modal(document.getElementById('moodModal'));
+          moodModal.show();
+        }
+      });
+    </script>
 </body>
 </html>

@@ -4,6 +4,8 @@ from health_routes import create_health_bp
 from di_container import initialize_container, get_auth_service, get_health_service, get_notification_service
 from datetime import datetime, timedelta
 import os
+from repositories.mood_repository import MoodRepository
+import random
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # 請改為安全的隨機字串
@@ -113,6 +115,17 @@ def init_db():
             meal_type TEXT,
             description TEXT,
             calories INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+    """)
+    
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS mood_records (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            mood TEXT,
+            mood_date TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(user_id) REFERENCES users(id)
         )
@@ -244,6 +257,26 @@ def index():
     _, age = health_service.calculate_age_and_days(birthday)
     bmi_evaluation = health_service.evaluate_bmi(latest_hw, gender, age)
 
+    # 檢查今日是否有心情紀錄
+    mood_repo = MoodRepository(DB_PATH)
+    today_mood = mood_repo.get_today_mood(user['id'])
+    show_mood_modal = today_mood is None
+
+    # 每日小提醒
+    daily_tips = [
+        '記得多喝水，保持身體水分充足！',
+        '起身活動一下，避免久坐！',
+        '適度運動有助於健康，今天有運動嗎？',
+        '保持良好睡眠，讓身體充分休息！',
+        '均衡飲食，蔬果不可少！',
+        '深呼吸，放鬆心情，減壓一下！',
+        '記得量血壓，關心自己的健康！',
+        '與親友聯繫，保持好心情！',
+        '午休片刻，恢復精神！',
+        '避免過度用眼，適時遠眺休息！'
+    ]
+    daily_tip = random.choice(daily_tips)
+    
     return render_template('index.html', 
                          username=user['username'], 
                          age_str=age_str, 
@@ -253,7 +286,9 @@ def index():
                          next_appointment=next_appointment, 
                          appt_reminder=appt_reminder,
                          bp_evaluation=bp_evaluation,
-                         bmi_evaluation=bmi_evaluation)
+                         bmi_evaluation=bmi_evaluation,
+                         show_mood_modal=show_mood_modal,
+                         daily_tip=daily_tip)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -682,6 +717,56 @@ def forgot_password():
             flash('密碼重設失敗，請稍後再試')
             return render_template('forgot_password.html')
     return render_template('forgot_password.html')
+
+@app.route('/mood', methods=['GET', 'POST'])
+def mood():
+    """Mood records management"""
+    user = get_current_user()
+    if not user:
+        return redirect(url_for('login'))
+    
+    mood_repo = MoodRepository(DB_PATH)
+    today_mood = mood_repo.get_today_mood(user['id'])
+    message = None
+    if request.method == 'POST' and not today_mood:
+        mood_value = request.form['mood']
+        mood_repo.add_mood(user['id'], mood_value)
+        flash('今日心情已記錄')
+        return redirect(url_for('mood'))
+    
+    # 七天心情分析（五選項版本）
+    last_7 = mood_repo.get_last_7_days(user['id'])
+    mood_score = {
+        'very_happy': 2,
+        'happy': 1,
+        'neutral': 0,
+        'a_bit_down': -1,
+        'very_down': -2
+    }
+    total = sum(mood_score.get(r['mood'], 0) for r in last_7)
+    if len(last_7) > 0:
+        if total > 0:
+            message = f"過去七天整體心情偏正面（分數：{total}），繼續保持！"
+        elif total < 0:
+            message = f"過去七天整體心情偏低潮（分數：{total}），多多關心自己喔！"
+        else:
+            message = "過去七天心情起伏平均，記得多做讓自己開心的事！"
+    else:
+        message = None
+    
+    mood_text_map = {
+        'very_happy': '很開心',
+        'happy': '開心',
+        'neutral': '普通',
+        'a_bit_down': '有點低潮',
+        'very_down': '很低潮'
+    }
+    return render_template('mood.html', 
+                         today_mood=today_mood, 
+                         last_7=last_7, 
+                         message=message, 
+                         username=user['username'],
+                         mood_text_map=mood_text_map)
 
 # Register health data Blueprint
 app.register_blueprint(create_health_bp(DB_PATH))
