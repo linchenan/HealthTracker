@@ -36,6 +36,15 @@ class HealthEvaluationService(IHealthEvaluationService):
             return "中度肥胖"
         else:
             return "重度肥胖"
+        
+    def evaluate_bmi(self, latest_hw: Optional[Dict], gender: str, age: int) -> str:
+        """Evaluate BMI based on latest height/weight record"""
+        if not latest_hw or latest_hw.get('height', 0) <= 0 or latest_hw.get('weight', 0) <= 0:
+            return "無法計算BMI，請確認身高體重數據"
+        
+        bmi = self.calculate_bmi(latest_hw['height'], latest_hw['weight'])
+        category = self.evaluate_bmi(bmi)
+        return f"{category} (BMI: {bmi:.1f})"
     
     def evaluate_blood_pressure(self, systolic: int, diastolic: int) -> str:
         """Evaluate blood pressure category"""
@@ -303,15 +312,12 @@ class HealthEvaluationService(IHealthEvaluationService):
             return []
     
     def evaluate_blood_pressure(self, bp_record: Optional[Dict]) -> Dict[str, str]:
-        """Evaluate blood pressure record"""
+        """Evaluate blood pressure record (dict input)"""
         if not bp_record:
             return {'status': '無血壓數據', 'recommendation': '請記錄血壓數據以獲得評估'}
-        
         systolic = bp_record.get('systolic', 0)
         diastolic = bp_record.get('diastolic', 0)
-        
-        category = self.evaluate_blood_pressure(systolic, diastolic)
-        
+        category = self._bp_category(systolic, diastolic)
         recommendations = {
             "低血壓": "建議諮詢醫師，注意水分攝取，避免突然起身",
             "正常血壓": "請保持良好的生活習慣",
@@ -320,26 +326,35 @@ class HealthEvaluationService(IHealthEvaluationService):
             "第二期高血壓": "建議盡快就醫治療",
             "高血壓危機": "請立即就醫！"
         }
-        
         return {
             'status': category,
             'recommendation': recommendations.get(category, '請諮詢醫師')
         }
+
+    def _bp_category(self, systolic: int, diastolic: int) -> str:
+        if systolic < 90 or diastolic < 60:
+            return "低血壓"
+        elif systolic < 120 and diastolic < 80:
+            return "正常血壓"
+        elif systolic < 130 and diastolic < 80:
+            return "血壓偏高"
+        elif systolic < 140 or diastolic < 90:
+            return "第一期高血壓"
+        elif systolic < 180 or diastolic < 120:
+            return "第二期高血壓"
+        else:
+            return "高血壓危機"
     
     def evaluate_bmi(self, hw_record: Optional[Dict], gender: str, age: int) -> Dict[str, str]:
         """Evaluate BMI record"""
         if not hw_record:
             return {'status': '無身高體重數據', 'recommendation': '請記錄身高體重數據以獲得評估'}
-        
         height = hw_record.get('height', 0)
         weight = hw_record.get('weight', 0)
-        
         if height <= 0 or weight <= 0:
             return {'status': '數據錯誤', 'recommendation': '請確認身高體重數據正確性'}
-        
         bmi = self.calculate_bmi(height, weight)
-        category = self.evaluate_bmi(bmi)
-        
+        category = self._bmi_category(bmi)
         recommendations = {
             "體重過輕": "建議增加營養攝取，適度重量訓練",
             "正常體重": "請保持良好的飲食和運動習慣",
@@ -348,11 +363,24 @@ class HealthEvaluationService(IHealthEvaluationService):
             "中度肥胖": "建議醫療減重介入，定期追蹤",
             "重度肥胖": "強烈建議就醫評估，考慮醫療介入"
         }
-        
         return {
             'status': f"{category} (BMI: {bmi:.1f})",
             'recommendation': recommendations.get(category, '請諮詢醫師')
         }
+
+    def _bmi_category(self, bmi: float) -> str:
+        if bmi < 18.5:
+            return "體重過輕"
+        elif bmi < 24:
+            return "正常體重"
+        elif bmi < 27:
+            return "體重過重"
+        elif bmi < 30:
+            return "輕度肥胖"
+        elif bmi < 35:
+            return "中度肥胖"
+        else:
+            return "重度肥胖"
     
     def delete_blood_pressure_record(self, record_id: int, user_id: int) -> bool:
         """Delete blood pressure record"""

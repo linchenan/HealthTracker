@@ -38,13 +38,14 @@
                 {% endif %}
               {% endwith %}
               <h2 class="card-title">血壓評估</h2>
-              <ul class="list-group list-group-flush mb-3">
-                {% for e in evaluations %}
-                <li class="list-group-item bg-success bg-opacity-10">{{ e }}</li>
-                {% else %}
-                <li class="list-group-item">尚無評價，請輸入血壓資料。</li>
-                {% endfor %}
-              </ul>
+              {% if evaluations %}
+              <div class="alert alert-info mb-3">
+                <strong>狀態：</strong> {{ evaluations.status }}<br>
+                <strong>建議：</strong> {{ evaluations.recommendation }}
+              </div>
+              {% else %}
+              <div class="alert alert-secondary mb-3">尚無評價，請輸入血壓資料。</div>
+              {% endif %}
               <form method="post" action="/record/blood_pressure">
                 <div class="row g-2 align-items-center mb-2">
                   <div class="col-auto">

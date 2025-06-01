@@ -217,6 +217,33 @@ def index():
     
     conn.close()
     
+    # 取得最新血壓與BMI評估
+    bp_records = health_service.get_blood_pressure_records(user['id'])
+    bp_list = [
+        {
+            'id': r['id'],
+            'systolic': r['systolic'],
+            'diastolic': r['diastolic'],
+            'created_at': r.get('date', r.get('created_at', ''))
+        } for r in bp_records
+    ]
+    latest_bp = bp_list[0] if bp_list else None
+    bp_evaluation = health_service.evaluate_blood_pressure(latest_bp)
+
+    hw_records = health_service.get_height_weight_records(user['id'])
+    hw_list = [
+        {
+            'id': r['id'],
+            'height': r['height'],
+            'weight': r['weight'],
+            'created_at': r.get('date', r.get('created_at', ''))
+        } for r in hw_records
+    ]
+    latest_hw = hw_list[0] if hw_list else None
+    gender, birthday = health_service.get_user_profile(user['id'])
+    _, age = health_service.calculate_age_and_days(birthday)
+    bmi_evaluation = health_service.evaluate_bmi(latest_hw, gender, age)
+
     return render_template('index.html', 
                          username=user['username'], 
                          age_str=age_str, 
@@ -224,7 +251,9 @@ def index():
                          prevention=prevention, 
                          warning=warning, 
                          next_appointment=next_appointment, 
-                         appt_reminder=appt_reminder)
+                         appt_reminder=appt_reminder,
+                         bp_evaluation=bp_evaluation,
+                         bmi_evaluation=bmi_evaluation)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -366,11 +395,10 @@ def height_weight():
     latest_hw = hw_list[0] if hw_list else None
     gender, birthday = health_service.get_user_profile(user['id'])
     _, age = health_service.calculate_age_and_days(birthday)
-    evaluations = health_service.evaluate_bmi(latest_hw, gender, age)
-    
+    evaluation = health_service.evaluate_bmi(latest_hw, gender, age)
     return render_template('height_weight.html', 
                          hw_list=hw_list, 
-                         evaluations=evaluations, 
+                         evaluation=evaluation, 
                          username=user['username'])
 
 @app.route('/medical_records', methods=['GET', 'POST'])

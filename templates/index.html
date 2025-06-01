@@ -50,6 +50,30 @@
               <div class="alert alert-info">{{ appt_reminder }}</div>
               {% endif %}
               {% if disease_info %}
+              <!-- 血壓評估區塊 -->
+              <div class="mb-4">
+                <h4>血壓評估</h4>
+                {% if bp_evaluation %}
+                  <div class="alert alert-info mb-2">
+                    <strong>狀態：</strong> {{ bp_evaluation.status }}<br>
+                    <strong>建議：</strong> {{ bp_evaluation.recommendation }}
+                  </div>
+                {% else %}
+                  <div class="alert alert-secondary mb-2">尚無血壓評估資料</div>
+                {% endif %}
+              </div>
+              <!-- BMI評估區塊 -->
+              <div class="mb-4">
+                <h4>BMI 評估</h4>
+                {% if bmi_evaluation %}
+                  <div class="alert alert-info mb-2">
+                    <strong>狀態：</strong> {{ bmi_evaluation.status }}<br>
+                    <strong>建議：</strong> {{ bmi_evaluation.recommendation }}
+                  </div>
+                {% else %}
+                  <div class="alert alert-secondary mb-2">尚無BMI評估資料</div>
+                {% endif %}
+              </div>
               <div class="mt-4">
                 <h4>中老年人常見疾病說明</h4>
                 <ul class="list-group mb-2">
@@ -70,6 +94,7 @@
                 </div>
               </div>
               {% endif %}
+              
             </div>
           </div>
         </div>

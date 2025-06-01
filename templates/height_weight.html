@@ -38,13 +38,12 @@
                 {% endif %}
               {% endwith %}
               <h2 class="card-title">BMI 評估</h2>
-              <ul class="list-group list-group-flush mb-3">
-                {% for e in evaluations %}
-                <li class="list-group-item bg-info bg-opacity-10">{{ e }}</li>
-                {% else %}
-                <li class="list-group-item">尚無評價，請輸入身高體重資料。</li>
-                {% endfor %}
-              </ul>
+              {% if evaluation and evaluation.status %}
+                <div class="alert alert-info mb-2">{{ evaluation.status }}</div>
+                <div class="alert alert-success">{{ evaluation.recommendation }}</div>
+              {% else %}
+                <div class="alert alert-secondary">尚無評價，請輸入身高體重資料。</div>
+              {% endif %}
               <form method="post" action="/record/height_weight">
                 <div class="row g-2 align-items-center mb-2">
                   <div class="col-auto">
