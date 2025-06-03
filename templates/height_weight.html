@@ -45,6 +45,13 @@
               {% else %}
                 <div class="alert alert-secondary">尚無評價，請輸入身高體重資料。</div>
               {% endif %}
+
+              <!-- 折線圖區塊 -->
+              <div class="my-4">
+                <h5>身高、體重、BMI 變化圖</h5>
+                <canvas id="hwBmiChart" height="120"></canvas>
+              </div>
+
               <form method="post" action="/record/height_weight">
                 <div class="row g-2 align-items-center mb-2">
                   <div class="col-auto">
@@ -65,20 +72,114 @@
                 </div>
               </form>
               <h3 class="mt-4">歷史身高體重紀錄</h3>
-              <ul class="list-group">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>身高 (cm)</th>
+                    <th>體重 (kg)</th>
+                    <th>紀錄日期</th>
+                    <th>紀錄時間</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
                 {% for hw in hw_list %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                  {{ hw.height }} cm / {{ hw.weight }} kg <span class="text-muted">({{ hw.created_at }})</span>
-                  <a href="{{ url_for('height_weight', delete_id=hw.id) }}" class="btn btn-sm btn-danger ms-2" onclick="return confirm('確定要刪除這筆身高體重紀錄嗎？')">刪除</a>
-                </li>
+                  <tr>
+                    <td>{{ hw.height }}</td>
+                    <td>{{ hw.weight }}</td>
+                    <td>{% if hw.created_at and '-' in hw.created_at %}{{ hw.created_at[:10] }}{% else %}-{% endif %}</td>
+                    <td>{% if hw.created_at and ':' in hw.created_at %}{{ hw.created_at[11:16] }}{% else %}-{% endif %}</td>
+                    <td>
+                      <a href="{{ url_for('height_weight', delete_id=hw.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('確定要刪除這筆身高體重紀錄嗎？')">刪除</a>
+                    </td>
+                  </tr>
                 {% else %}
-                <li class="list-group-item">尚無紀錄</li>
+                  <tr><td colspan="5">尚無紀錄</td></tr>
                 {% endfor %}
-              </ul>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
       </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      // 準備資料（最舊到最新）
+      const hwList = JSON.parse('{{ hw_list|tojson|safe }}');
+      hwList.reverse();
+      const labels = hwList.map(hw => hw.created_at);
+      const heights = hwList.map(hw => hw.height);
+      const weights = hwList.map(hw => hw.weight);
+      const bmis = hwList.map(hw => (hw.height > 0 ? (hw.weight / ((hw.height/100)*(hw.height/100))).toFixed(1) : null));
+
+      const ctx = document.getElementById('hwBmiChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: '身高 (cm)',
+              data: heights,
+              borderColor: 'rgba(54, 162, 235, 1)',
+              backgroundColor: 'rgba(54, 162, 235, 0.1)',
+              yAxisID: 'y',
+              tension: 0.3,
+              fill: false
+            },
+            {
+              label: '體重 (kg)',
+              data: weights,
+              borderColor: 'rgba(255, 99, 132, 1)',
+              backgroundColor: 'rgba(255, 99, 132, 0.1)',
+              yAxisID: 'y1',
+              tension: 0.3,
+              fill: false
+            },
+            {
+              label: 'BMI',
+              data: bmis,
+              borderColor: 'rgba(255, 206, 86, 1)',
+              backgroundColor: 'rgba(255, 206, 86, 0.1)',
+              yAxisID: 'y2',
+              tension: 0.3,
+              fill: false
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'top' },
+            title: { display: false }
+          },
+          scales: {
+            y: {
+              type: 'linear',
+              position: 'left',
+              title: { display: true, text: '身高 (cm)' },
+              beginAtZero: false
+            },
+            y1: {
+              type: 'linear',
+              position: 'right',
+              title: { display: true, text: '體重 (kg)' },
+              grid: { drawOnChartArea: false },
+              beginAtZero: false
+            },
+            y2: {
+              type: 'linear',
+              position: 'right',
+              title: { display: true, text: 'BMI' },
+              grid: { drawOnChartArea: false },
+              beginAtZero: false,
+              min: 10,
+              max: 40
+            }
+          }
+        }
+      });
+    </script>
 </body>
 </html>

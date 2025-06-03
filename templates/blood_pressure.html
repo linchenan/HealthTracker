@@ -67,16 +67,32 @@
                 </div>
               </form>
               <h3 class="mt-4">歷史血壓紀錄</h3>
-              <ul class="list-group">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>收縮壓</th>
+                    <th>舒張壓</th>
+                    <th>紀錄日期</th>
+                    <th>紀錄時間</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
                 {% for bp in bp_list %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                  {{ bp.systolic }}/{{ bp.diastolic }} mmHg <span class="text-muted">({{ bp.created_at }})</span>
-                  <a href="{{ url_for('blood_pressure', delete_id=bp.id) }}" class="btn btn-sm btn-danger ms-2" onclick="return confirm('確定要刪除這筆血壓紀錄嗎？')">刪除</a>
-                </li>
+                  <tr>
+                    <td>{{ bp.systolic }}</td>
+                    <td>{{ bp.diastolic }}</td>
+                    <td>{% if bp.created_at and '-' in bp.created_at %}{{ bp.created_at[:10] }}{% else %}-{% endif %}</td>
+                    <td>{% if bp.created_at and ':' in bp.created_at %}{{ bp.created_at[11:16] }}{% else %}-{% endif %}</td>
+                    <td>
+                      <a href="{{ url_for('blood_pressure', delete_id=bp.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('確定要刪除這筆血壓紀錄嗎？')">刪除</a>
+                    </td>
+                  </tr>
                 {% else %}
-                <li class="list-group-item">尚無紀錄</li>
+                  <tr><td colspan="5">尚無紀錄</td></tr>
                 {% endfor %}
-              </ul>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
